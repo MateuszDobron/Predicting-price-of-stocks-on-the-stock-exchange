@@ -70,7 +70,7 @@ financial_indicators = ["ROE", "ROA", "EPS"]
 if financial_data:
     for company_ticker in companies_tickers_list:
         for indicator in financial_indicators:
-            data = pd.read_csv('../scraping/data/' + company_ticker + '/' + company_ticker + '_' + indicator + '.csv')
+            data = pd.read_csv('./scraping/data/' + company_ticker + '/' + company_ticker + '_' + indicator + '.csv')
             data["Date"] = data["Year"].astype(str) + '-' + data["Month"].astype(str) + '-' + data["Day"].astype(str)
             data["Date"] = pd.to_datetime(data["Date"], format='%Y-%m-%d')
             list_of_values = list()
@@ -84,7 +84,7 @@ if financial_data:
         df[company_ticker + '_ROA'] = df[company_ticker + '_ROA'].str.replace('%', '')
 
 # bonds interest
-data = pd.read_csv('../scraping/data/InterestRatesBonds/InterestRatesBonds.csv')
+data = pd.read_csv('./scraping/data/InterestRatesBonds/InterestRatesBonds.csv')
 data["Date"] = data["Year"].astype(str) + '-' + data["Month"].astype(str) + '-' + data["Day"].astype(str)
 data["Date"] = pd.to_datetime(data["Date"], format='%Y-%m-%d')
 list_of_values_2 = list()
@@ -100,7 +100,7 @@ df["2 Yr"] = list_of_values_2
 df["20 Yr"] = list_of_values_20
 
 #CPI
-data = pd.read_csv('../scraping/data/CPI/CPI.csv')
+data = pd.read_csv('./scraping/data/CPI/CPI.csv')
 data["Date"] = data["Year"].astype(str) + '-' + data["Month"].astype(str)
 data["Date"] = pd.to_datetime(data["Date"], format='%Y-%m')
 list_of_values = list()
@@ -113,7 +113,7 @@ for index, row in df.iterrows():
 df["CPI"] = list_of_values
 
 #money supply
-data = pd.read_csv('../scraping/data/MoneySupply/MoneySupply.csv')
+data = pd.read_csv('./scraping/data/MoneySupply/MoneySupply.csv')
 data["Date"] = data["Year"].astype(str) + '-' + data["Month"].astype(str)
 data["Date"] = pd.to_datetime(data["Date"], format='%Y-%m')
 list_of_values_M1 = list()
@@ -148,4 +148,10 @@ if sorted:
     final_order.append('M2')
     df = df[final_order]
 
-df.to_csv('./dataset.csv')
+for column in df.columns:
+    df[column] = df[column].astype(str)
+    df[column] = df[column].str.replace("$", "")
+    df[column] = df[column].str.replace(",", ".")
+    df[column] = df[column].astype(float)
+
+df.to_csv('./dataset/dataset.csv')
