@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def text_extract(path, column_to_extract, max_column, extract_column_name, output_name):
+def extract_financecharts(path, column_to_extract, max_column, extract_column_name):
     file = open(path + '.txt')
     lines = file.readlines()
     count = 0
@@ -25,5 +25,5 @@ def text_extract(path, column_to_extract, max_column, extract_column_name, outpu
         else:
             count += 1
     result = pd.DataFrame(list(zip(year, month, day, data)), columns=['Year', 'Month', 'Day', extract_column_name])
-    result.to_csv(output_name)
+    result.to_csv(path + '.csv')
     file.close()
