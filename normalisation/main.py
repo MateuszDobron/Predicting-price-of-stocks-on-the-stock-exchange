@@ -3,11 +3,6 @@ import pandas as pd
 import numpy as np
 
 data = pd.read_csv('./dataset/dataset.csv')
-for column in data.columns:
-    data[column] = data[column].astype(str)
-    data[column] = data[column].str.replace("$", "")
-    data[column] = data[column].str.replace(",", ".")
-    data[column] = data[column].astype(float)
 print(data.columns)
 data.drop(columns="Year", inplace=True)
 data_np = data.to_numpy()
@@ -24,4 +19,46 @@ for i in range(0, data_np.shape[0] - days_given - days_prediction + 1):
 
 print(data_sliced.shape)
 np.set_printoptions(threshold=sys.maxsize)
-print(data_sliced[:, 0:3 , 4489])
+print(data_sliced[:, 0:3 , 4494])
+
+company_to_predict = "AAPL"
+companies = ["AAPL", "MSFT", "AMZN", "GOOG", "NVDA"]
+values = ["_Open", "_High", "_Low", "_Close", "_Volume"]
+columns_to_normalise = list()
+
+for company in companies:
+    for value in values:
+        columns_to_normalise.append(company+value)
+
+columns_to_normalise.append("M1")
+columns_to_normalise.append("M2")
+
+columns_to_normalise_int = list()
+
+i = 0
+for column in data.columns:
+    for column_from_normalise in columns_to_normalise:
+        if column == column_from_normalise:
+            columns_to_normalise_int.append(i - 1)
+    i += 1
+
+print(columns_to_normalise_int)
+
+print(data_sliced.shape)
+data_sliced_norm = data_sliced.copy()
+for i in range(0, data_sliced.shape[2]):
+    for column in columns_to_normalise_int:
+        if(np.max(data_sliced[:, column, i]) - np.min(data_sliced[:, column, i]) == 0):
+            data_sliced_norm[:, column, i] = 0.5
+        else:
+            data_sliced_norm[:, column, i] = (data_sliced[:, column, i] - np.min(data_sliced[:, column, i])) / (np.max(data_sliced[:, column, i]) - np.min(data_sliced[:, column, i]))
+
+data_sliced = np.transpose(data_sliced, (2, 1, 0))
+data_sliced_norm = np.transpose(data_sliced_norm, (2, 1, 0))
+
+print(data_sliced.shape)
+print(data_sliced_norm.shape)
+
+np.save('./normalisation/data_sliced_norm.npy', data_sliced_norm)
+np.save('./normalisation/data_sliced.npy', data_sliced)
+
