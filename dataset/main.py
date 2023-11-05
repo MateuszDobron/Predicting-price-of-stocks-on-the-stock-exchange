@@ -11,7 +11,7 @@ interval = "1d"  # 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo so 
 
 # assumed possible companies apple microsoft amazon alphabet nvidia
 # just modify the set
-companies = {"apple", "microsoft", "amazon", "alphabet", "nvidia"}
+# companies = {"apple", "microsoft", "amazon", "alphabet", "nvidia"}
 
 # Open, High, Low, Close are always present
 # Change to true if it should be present false otherwise
@@ -24,18 +24,18 @@ financial_data = True
 sort = True
 
 # do not  modify things below
-companies_tickers_list = []
-for company in companies:
-    if company == "apple":
-        companies_tickers_list.append("AAPL")
-    if company == "microsoft":
-        companies_tickers_list.append("MSFT")
-    if company == "amazon":
-        companies_tickers_list.append("AMZN")
-    if company == "alphabet":
-        companies_tickers_list.append("GOOG")
-    if company == "nvidia":
-        companies_tickers_list.append("NVDA")
+companies_tickers_list = ["MSFT", "NVDA", "AAPL", "AMZN", "GOOG"]
+# for company in companies:
+#     if company == "apple":
+#         companies_tickers_list.append("AAPL")
+#     if company == "microsoft":
+#         companies_tickers_list.append("MSFT")
+#     if company == "amazon":
+#         companies_tickers_list.append("AMZN")
+#     if company == "alphabet":
+#         companies_tickers_list.append("GOOG")
+#     if company == "nvidia":
+#         companies_tickers_list.append("NVDA")
 
 print(companies_tickers_list)
 data_temp = yf.download(tickers=companies_tickers_list, start=start_year + "-" + start_month + "-" + start_day,
