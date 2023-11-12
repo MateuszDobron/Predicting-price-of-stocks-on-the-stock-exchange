@@ -17,6 +17,8 @@ class LSTMModel:
     INPUT_DAYS = 3
     # number of predicted days (size of output vector)
     OUTPUT_DAYS = 1
+    # default training/prediction dataset file path
+    DEFAULT_DATASET = '../dataset/dataset.csv'
     # MinMax scaler for data normalization
     scaler = MinMaxScaler()
     data_scaler = None
@@ -54,6 +56,8 @@ class LSTMModel:
         predicted_price = self.model.predict(prices, verbose=0)
         return self.__inverse_transform(predicted_price)
 
+    def predict(self, ticker):
+        input = self.__extract_prediction_prices(ticker)
     def predict_for_given_days(self, prices, num_of_days):
         predicted_prices = numpy.empty(num_of_days, dtype=float)
         model_input = prices
@@ -102,6 +106,14 @@ class LSTMModel:
         array_data_input, array_data_exp_output = array(data_input), array(data_exp_output)
         return array_data_input.reshape((array_data_input.shape[0], array_data_input.shape[1], 1)), \
             array_data_exp_output
+
+    def __extract_prediction_interval(self, ticker):
+        data_input = list()
+        with open('filename', "r") as f:
+            reader = csv.reader(f, delimiter=",")
+            data = list(reader)
+            row_count = len(data)
+
 
     def __normalize_data(self, data):
         self.data_scaler = self.scaler.fit(data)
