@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI for stock market prediction</title>
+    <link rel="stylesheet" href="{% static 'profile/style.css' %}">
+</head>
+<body>
+<div style="width: 100%; display: table">
+    <div style="display: table-row">
+        <div style="width: 10%; display: table-cell">
+            {% include "profile/navbar.html" %}
+        </div>
+    <div id="profile-page-content" style="width: 90%; display: table-cell">
+        <h2>EDIT PROFILE INFORMATION</h2>
+        <div class="profile-page-form-outer">
+            <form method="post">
+                {% csrf_token %}
+                <div class="profile-page-form-inner">
+                    {% for field in edit_profile_form %}
+
+                    <div class="form-input-group">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        <br>
+                    </div>
+
+                    {% endfor %}
+                    <br>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+</div>
+</body>

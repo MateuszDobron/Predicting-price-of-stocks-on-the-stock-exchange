@@ -1,12 +1,16 @@
+# Author: Piotr Cieślak
+
 import csv
 
 import keras.layers
 import numpy
 import pandas as pd
+import logging
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from numpy import array
 
+logging.getLogger().setLevel(logging.INFO)
 
 class LSTMModel:
     # number of nodes used in the inner layers
@@ -47,17 +51,22 @@ class LSTMModel:
     def train_model(self, file_path):
         self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
         data_x, data_y = self.__prepare_train_data(file_path)
-        self.model.fit(data_x, data_y, epochs=10, verbose=1)
+        self.model.fit(data_x, data_y, epochs=100, verbose=1)
 
     def predict(self, prices):
         prices = prices.reshape(-1, 1)
         prices = self.__normalize_data(prices)
         prices = prices.reshape(1, -1)
         predicted_price = self.model.predict(prices, verbose=0)
-        return self.__inverse_transform(predicted_price)
+        predicted_price_transformed = self.__inverse_transform(predicted_price)
+        logging.info(f"Predicted price: {predicted_price_transformed[0]}")
+        return predicted_price_transformed
 
-    def predict(self, ticker):
-        input = self.__extract_prediction_prices(ticker)
+    def predict_for_ticker(self, ticker):
+        input = self.__extract_prediction_interval(ticker)
+        predicted_price = self.predict(input)
+        return numpy.append(input, predicted_price)
+
     def predict_for_given_days(self, prices, num_of_days):
         predicted_prices = numpy.empty(num_of_days, dtype=float)
         model_input = prices
@@ -77,14 +86,15 @@ class LSTMModel:
         delimiter = ','
         if not file_path:
             test_data = numpy.genfromtxt('../dataset/dataset.csv', delimiter=delimiter, usecols=7, dtype=float,
-                                         skip_header=True, max_rows=251)
+                                         skip_header=True, max_rows=3000)
             test_data = test_data.reshape(-1, 1)
-            return self.__extract_training_intervals(test_data)
+            test_data_normalized = self.__normalize_data(test_data)
+            return self.__extract_training_intervals(test_data_normalized)
         else:
             col_names_list = pd.read_csv(file_path, nrows=1, header=0).columns.to_list()
 
             # get index of column which contains close prices
-            col_index = list(map(lambda col: 'close' in col, col_names_list)).index(True)
+            col_index = list(map(lambda col: 'close' in col.lower(), col_names_list)).index(True)
 
             data = numpy.genfromtxt(file_path, delimiter=delimiter, skip_header=1, usecols=col_index, dtype=float)
             print(data)
@@ -108,11 +118,17 @@ class LSTMModel:
             array_data_exp_output
 
     def __extract_prediction_interval(self, ticker):
-        data_input = list()
-        with open('filename', "r") as f:
+        delimiter = ','
+        input_data = list()
+        with open(self.DEFAULT_DATASET, "r") as f:
             reader = csv.reader(f, delimiter=",")
             data = list(reader)
             row_count = len(data)
+        col_names_list = pd.read_csv(self.DEFAULT_DATASET, nrows=1, header=0).columns.to_list()
+        col_name = list(map(lambda col: ticker+'_Close' in col, col_names_list)).index(True)
+        #fixme set dataset
+        input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-3, delimiter=delimiter, usecols=col_name, dtype=float)
+        return input_data
 
 
     def __normalize_data(self, data):
@@ -123,11 +139,10 @@ class LSTMModel:
         return self.data_scaler.inverse_transform(data)
 
 
-model = LSTMModel('')
-# model.train_model('C:\\Users\\piotr\\PycharmProjects\\group_project\\lstm_model\\datasets\\nasdaq.csv')
-# model.save_model('C:\\Users\\piotr\\PycharmProjects\\group_project\\lstm_model\\saved_models\\model.keras')
-model.train_model('')
-x_input = array([122, 124, 119])
+# model = LSTMModel('')
+# model.train_model('')
+# model.save_model('C:\\dev\\git\\inzynierka\\lstm_model\\saved_models\\model.keras')
+# x_input = array([122, 124, 119])
 # x_input = x_input.reshape((1, 3, 1))
-print(model.predict(x_input))
-#print(model.predict_for_given_days(x_input, 3))
+# print(model.predict(x_input))
+# print(model.predict_for_given_days(x_input, 3))

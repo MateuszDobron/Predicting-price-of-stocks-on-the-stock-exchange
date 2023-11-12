@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Keras Model</title>
+</head>
+<body>
+    <h2>Upload Your Keras Model</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="model_file">
+        <input type="submit" value="Upload Model">
+    </form>
+
+    <h2>Make Predictions</h2>
+    <form id="prediction-form">
+        <input type="text" name="input_data" placeholder="Input Data">
+        <button type="submit">Predict</button>
+    </form>
+
+    <div id="prediction-result"></div>
+
+    <script>
+        document.getElementById("prediction-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            var input_data = document.querySelector('input[name="input_data"]').value;
+
+            fetch("/predict/", {
+                method: "POST",
+                body: JSON.stringify({ input_data: input_data }),
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Content-Type": "application/json",
+                },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    document.getElementById("prediction-result").innerText = "Prediction: " + data.prediction;
+                });
+        });
+
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                var cookies = document.cookie.split(";");
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

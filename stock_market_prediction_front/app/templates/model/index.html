@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI for stock market prediction</title>
+    <link rel="stylesheet" href="{% static 'model/style.css' %}">
+</head>
+<body>
+<div style="width: 100%; display: table">
+    <div style="display: table-row">
+        <div style="width: 10%; display: table-cell">
+            {% include "model/navbar.html" %}
+        </div>
+        <div id="model-page-content" style="width: 90%; display: table-cell">
+            <h2>CUSTOMIZE AI MODEL</h2>
+            <div class="ai-model-form-outer">
+                <form action="/ai-model/" method="post" enctype="multipart/form-data">
+                    <div class="ai-model-form-inner">
+                        {% csrf_token %}
+                            <div class="form-input-group">
+                                <label for="model-type">MODEL ARCHITECTURE</label>
+                                <input list="model-types" name="model-type" id="model-type">
+                                <datalist id="model-types">
+                                    <option value="LSTM Model"/>
+                                    <option value="CNN Model"/>
+                                </datalist> <br>
+                            </div>
+                            <div class="form-input-group">
+                                <label for="train-data">TRAIN DATA</label>
+                                <input type="file" name="train-data" id="train-data"> <br>
+                            </div>
+                    </div>
+                    <input type="submit" value="Save">
+                </form>
+            </div>
+            <h2>LOAD AI MODEL</h2>
+            <div class="ai-model-form-outer">
+                <form action="/ai-model/upload/" method="post" enctype="multipart/form-data">
+                    <div class="ai-model-form-inner">
+                        {% csrf_token %}
+                            <div class="form-input-group">
+                                <label for="ai-model-upload-path">MODEL</label>
+                                <input type="file" name="ai-model-upload-path" id="ai-model-upload-path"> <br>
+                            </div>
+                    </div>
+                    <input type="submit" value="Save">
+                </form>
+            </div>
+            <h2>SAVE AI MODEL</h2>
+            <div class="ai-model-form-outer">
+                <form action="/ai-model/" method="get" enctype="multipart/form-data">
+                    <div class="ai-model-form-inner">
+                        {% csrf_token %}
+                            <div class="form-input-group">
+                                <label for="ai-model-download-path">PATH</label>
+                                <input type="file" name="ai-model-download-path" id="ai-model-download-path" directory multiple/> <br>
+                            </div>
+                    </div>
+                    <input type="submit" value="Save">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
