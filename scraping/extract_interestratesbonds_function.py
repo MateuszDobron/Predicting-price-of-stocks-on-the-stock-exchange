@@ -1,6 +1,8 @@
-import pandas
+import pandas, os
 
 def extract_interestratesbonds():
+    if os.path.exists('./scraping/data/InterestRatesBonds/InterestRatesBonds.csv'):
+        os.remove('./scraping/data/InterestRatesBonds/InterestRatesBonds.csv')
     rates_old = pandas.read_csv('./data/InterestRatesBonds/yield-curve-rates-1990-2021.csv')
     rates_2022 = pandas.read_csv('./data/InterestRatesBonds/daily-treasury-rates_2022.csv')
     rates_2023 = pandas.read_csv('./data/InterestRatesBonds/daily-treasury-rates_2023.csv')
@@ -14,4 +16,4 @@ def extract_interestratesbonds():
     df.drop(columns="Date", inplace=True)
     df["Day"] = df["Day"].apply(lambda x: x[1] if x[0] == "0" else x)
     df["Month"] = df["Month"].apply(lambda x: x[1] if x[0] == "0" else x)
-    df.to_csv('./data/InterestRatesBonds/InterestRatesBonds.csv')
+    df.to_csv('./scraping/data/InterestRatesBonds/InterestRatesBonds.csv')

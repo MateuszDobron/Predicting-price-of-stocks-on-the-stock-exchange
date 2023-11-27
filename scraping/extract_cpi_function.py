@@ -16,7 +16,7 @@ def extract_cpi():
         11: "Nov",
         12: "Dec"
     }
-    data = pandas.read_csv('./data/CPI/SeriesReport-2023101511.csv')
+    data = pandas.read_csv('./scraping/data/CPI/SeriesReport.csv')
     data.drop(data[data["Year"].astype(int) < 1999].index, inplace=True)
     df = pandas.DataFrame()
     for year in range(2023, 1999, -1):
@@ -27,4 +27,4 @@ def extract_cpi():
             new_record = pandas.DataFrame([{"Year": year, "Month": month, 
                                             "CPI":np.round(((data.loc[data["Year"]==year, Dict[month]].item() - data.loc[data["Year"]==year - 1, Dict[month]].item()) / data.loc[data["Year"]==year - 1, Dict[month]].item())*100, 1)}])
             df = pandas.concat([df, new_record], ignore_index=True)
-    df.to_csv('./data/CPI/CPI.csv')
+    df.to_csv('./scraping/data/CPI/CPI.csv')

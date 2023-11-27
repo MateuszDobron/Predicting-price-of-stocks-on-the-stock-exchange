@@ -1,18 +1,21 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
-import time
+import time, os
 
-
+# required to have selenium at least 4.0
 def scrape(url, output_file_name):
-    service = Service('./chromedriver.exe')
+    # service = Service('/scraping/chromedriver.exe')
     options = webdriver.ChromeOptions()
     options.add_argument("--enable-javascript")
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = webdriver.Chrome(options=options)
     driver.get(url)
-    time.sleep(20)
+    time.sleep(30)
     soup = BeautifulSoup(driver.page_source, features="html.parser")
     divTag = soup.find_all("table", {"class": "table table-hover"})
+
+    if os.path.exists(output_file_name+'.txt'):
+        os.remove(output_file_name+'.txt')
 
     text_file = open(output_file_name + '.txt', "w")
 

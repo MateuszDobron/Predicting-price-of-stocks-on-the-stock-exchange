@@ -1,7 +1,9 @@
 import pandas as pd
-
+import os
 
 def extract_financecharts(path, column_to_extract, max_column, extract_column_name):
+    if os.path.exists(path + '.csv'):
+        os.remove(path + '.csv')
     file = open(path + '.txt')
     lines = file.readlines()
     count = 0
