@@ -11,6 +11,7 @@ from lstm_model.lstm_model import LSTMModel
 from pathlib import Path
 from datetime import datetime
 
+import shutil
 import os
 
 # fixme
@@ -36,10 +37,11 @@ def ai_model_prediction(request):
     selected_company_ticker = company_mapper.map_name_to_ticker(selected_company)
     if request.session.get('model_type', 'lstm') == 'lstm':
         graph_prices = lstm_model_instance.predict_for_ticker(selected_company_ticker)
+        GraphUtils.get_graph(graph_prices)
     elif request.session.get('model_type') == 'cnn':
-        graph_prices = [1, 1, 1, 1]
-        print('to be implemented')
-    GraphUtils.get_graph(graph_prices)
+        if os.path.exists("./stock_market_prediction_front/app/static/home_page/plots/plot.png"):
+            os.remove("./stock_market_prediction_front/app/static/home_page/plots/plot.png")
+        shutil.copyfile("./cnn/charts/" + selected_company_ticker + ".png", "./stock_market_prediction_front/app/static/home_page/plots/plot.png")
     return redirect("home-page")
 
 

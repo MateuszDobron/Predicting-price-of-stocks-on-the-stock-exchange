@@ -10,9 +10,9 @@ def make_model():
     data_norm = np.load('./cnn/data/data_sliced_norm.npy')
     to_predict = np.load('./cnn/data/topredict.npy')
 
-    data = data[:, :, 1:]
-    data_norm = data_norm[:, : , 1:]
-    to_predict = to_predict - 1
+    data = data[:, :, 2:]
+    data_norm = data_norm[:, : , 2:]
+    to_predict = to_predict - 2
 
     print(to_predict)
     print(to_predict.shape)
@@ -39,13 +39,14 @@ def make_model():
     model.add(keras.layers.Dropout(rate=0.4))
     model.add(keras.layers.convolutional.Conv1D(filters=64, kernel_size=3, activation='relu', kernel_regularizer=keras.regularizers.L2(0.01)))
     model.add(keras.layers.convolutional.Conv1D(filters=64, kernel_size=3, activation='relu', kernel_regularizer=keras.regularizers.L2(0.01)))
+    model.add(keras.layers.convolutional.Conv1D(filters=64, kernel_size=3, activation='relu', kernel_regularizer=keras.regularizers.L2(0.01)))
     model.add(keras.layers.convolutional.MaxPooling1D(pool_size=3))
     model.add(keras.layers.Dropout(rate=0.25))
     model.add(keras.layers.convolutional.Conv1D(filters=64, kernel_size=2, activation='relu', kernel_regularizer=keras.regularizers.L2(0.01)))
     model.add(keras.layers.convolutional.MaxPooling1D(pool_size=2))
     model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dense(45000, activation='relu'))
+    model.add(keras.layers.Dense(4000, activation='relu'))
     model.add(keras.layers.Dense(to_predict.shape[0] * days_prediction))
     model.compile(optimizer='adam', loss='mse')
-    model.fit(X, y, epochs= 20)
+    model.fit(X, y, epochs= 100)
     model.save('./cnn/model.keras')
