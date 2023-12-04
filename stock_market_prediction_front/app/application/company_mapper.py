@@ -9,7 +9,7 @@ class CompanyMapper:
 
         dictionary = {
             "apple": "AAPL",
-            "google": "GOOG",
+            "amd": "AMD",
             "nvidia": "NVDA",
             "amazon": "AMZN",
             "microsoft": "MSFT"

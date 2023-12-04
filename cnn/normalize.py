@@ -5,7 +5,7 @@ import numpy as np
 def normalize():
     data = pd.read_csv('./dataset/dataset.csv')
     print(data.columns)
-    data.drop(columns="Year", inplace=True)
+    # data.drop(columns="Year", inplace=True)
     data_np = data.to_numpy()
     print(data_np.shape)
 

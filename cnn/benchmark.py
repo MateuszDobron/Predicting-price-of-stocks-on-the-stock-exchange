@@ -8,9 +8,9 @@ days_prediction = 90
 data = np.load('./cnn/data/data_sliced.npy')
 data_norm = np.load('./cnn/data/data_sliced_norm.npy')
 to_predict = np.load('./cnn/data/topredict.npy')
-to_predict = to_predict - 1
-data = data[:, :, 1:]
-data_norm = data_norm[:, : , 1:]
+to_predict = to_predict - 2
+data = data[:, :, 2:]
+data_norm = data_norm[:, : , 2:]
 print(data.shape)
 final_entry = data.shape[0]
 start_entry = 3750
