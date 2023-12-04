@@ -8,7 +8,7 @@ test.csv
 stock_market_prediction_front/uploaded-models
 lstm_model/saved_models
 stock_market_prediction_front/app/static/home_page/plots/plot.png
-db.sqlite3
+.sqlite3
 media
 
 # Backup files #

@@ -59,5 +59,18 @@ input[type="file"] {
 
 .form-input-group > input {
     float: right;
+}
 
+.error-list {
+    float: right;
+    color: red;
+    font-size: 12px;
+    padding: 0;
+    margin: 0;
+}
+
+.error-list > p {
+    margin: 0;
+    padding: 0;
+    color: red;
 }

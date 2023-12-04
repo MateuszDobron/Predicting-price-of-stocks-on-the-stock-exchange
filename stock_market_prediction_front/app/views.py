@@ -1,53 +1,101 @@
-from django.shortcuts import render
-from django.shortcuts import redirect
+# Author: Piotr Cieślak
+
+from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as django_login
+from django.contrib.auth.models import User
+from django.db import transaction
+
 from .application.company_mapper import CompanyMapper
 from .application.utils import GraphUtils
 from .application.file_validator import FileValidator
+
 from .forms.choose_company_form import ChooseCompanyForm
 from .forms.profile_edit_form import EditProfileForm
+from .forms.login_form import LoginForm
+from .forms.register_form import RegisterForm
+
+from .models import Profile, Address
+
 from lstm_model.lstm_model import LSTMModel
 from pathlib import Path
 from datetime import datetime
 
 import os
+import yfinance as yf
 
 # fixme
 lstm_model_instance = LSTMModel('C:\\dev\\git\\inzynierka\\lstm_model\\saved_models\\model.keras')
 company_mapper = CompanyMapper()
 
 
+@login_required
 def home_page(request):
+    context = {}
+    ''' This function renders the home page of the website '''
     if request.method == "GET":
         form = ChooseCompanyForm()
-        selected_company = request.session.get('selected_company', 'APPLE')
+        ''' Set "APPLE" as the default company for predicting prices, or if chosen, set "selected_company" ticker '''
+        selected_company = request.session.get('selected_company', 'apple')
         form.fields['company'].initial = selected_company
-        return render(request, "home_page/index.html", {"choose_company_form": form})
+        context.update({'choose_company_form': form})
+
+        ''' Get the maximum and minimum price for a company from yahoo finance'''
+        selected_company_ticker = company_mapper.map_name_to_ticker(selected_company)
+        selected_company_inst = yf.Ticker(selected_company_ticker)
+        selected_company_info = selected_company_inst.basic_info
+
+        context.update({'company': selected_company})
+        context.update({'ticker': selected_company_ticker})
+        context.update({'max_price': selected_company_info.year_high})
+        context.update({'min_price': selected_company_info.year_low})
+        context.update({'shares': selected_company_info.shares})
+
+        return render(request, "home_page/index.html", context)
 
 
+@login_required
 def model_page(request):
     return render(request, "model/index.html")
 
 
+@login_required
 def ai_model_prediction(request):
+    ''' This function triggers AI model prediction and generates the graph '''
+
+    ''' Get the selected_company name '''
     selected_company = request.POST.get('company')
     request.session['selected_company'] = selected_company
+
+    ''' Map the name to a company ticker '''
     selected_company_ticker = company_mapper.map_name_to_ticker(selected_company)
+
+    ''' Get the AI model to make predictions. Default is LSTM '''
     if request.session.get('model_type', 'lstm') == 'lstm':
+        ''' Get prediction '''
         graph_prices = lstm_model_instance.predict_for_ticker(selected_company_ticker)
+
     elif request.session.get('model_type') == 'cnn':
         graph_prices = [1, 1, 1, 1]
         print('to be implemented')
+
+    ''' Generate a graph based on predicted prices '''
     GraphUtils.get_graph(graph_prices)
     return redirect("home-page")
 
 
+@login_required
 @require_http_methods(["POST", "GET", "PUT"])
 def ai_model(request):
+    ''' This function modifies the working AI model instance '''
     global lstm_model_instance
+
     # choose AI model type
     if request.method == "POST":
+        ''' Set the new model_type and train_file '''
         model_type = request.POST['model-type']
         train_file = request.FILES.get('train-data', None)
         if model_type == 'LSTM Model':
@@ -58,18 +106,23 @@ def ai_model(request):
             # fixme
             # validate train_file
             # asynchronically train model
+            ''' Train the model with a provided train_file '''
             if FileValidator().validate_file(file=train_file) == True:
                 lstm_model_instance.train_model(train_file)
-            print('to be implemented')
+
     # save AI model
     if request.method == 'GET':
+        ''' Save the AI model to the desktop '''
         model_save_file_name = 'Downloads\\model_' + datetime.now().strftime('%Y-%m-%d') + '.keras'
         model_save_path = str(os.path.join(Path.home(), model_save_file_name))
         lstm_model_instance.save_model(model_save_path)
     return redirect('model-page')
 
 
+@login_required
 def ai_model_upload(request):
+    ''' This function is used for uploading a saved AI model to the website '''
+
     global lstm_model_instance
     if request.FILES['ai-model-upload-path']:
         uploaded_model = request.FILES['ai-model-upload-path']
@@ -80,12 +133,75 @@ def ai_model_upload(request):
     return redirect("model-page")
 
 
+@login_required
 def profile(request):
-    if request.method == "POST":
-        #fixme
-        print("do stuff")
+    profile = Profile.objects.get(user__email=request.user.email)
 
+    if request.method == "POST":
+        edit_profile_form = EditProfileForm(request.POST)
+        if edit_profile_form.is_valid():
+            profile.phone_number = edit_profile_form.cleaned_data.get('phone_number')
+            profile.address.city = edit_profile_form.cleaned_data.get('city')
+            profile.address.street = edit_profile_form.cleaned_data.get('street')
+            profile.address.postal_code = edit_profile_form.cleaned_data.get('postal_code')
+            profile.save()
     else:
         edit_profile_form = EditProfileForm()
+        edit_profile_form.set_fields(profile)
 
-    return render(request, "profile/index.html", {"edit_profile_form" : edit_profile_form})
+    return render(request, "profile/index.html", {"edit_profile_form": edit_profile_form})
+
+
+def login(request):
+    if request.method == 'POST':
+        login_form = LoginForm(request.POST)
+        if login_form.is_valid():
+            email = login_form.cleaned_data.get('email')
+            password = login_form.cleaned_data.get('password')
+            user = authenticate(username=email, email=email, password=password)
+            if not user:
+                login_form.set_wrong_credentials_error()
+                return render(request, "login/index.html", {"login_form": login_form}, status=403)
+            else:
+                django_login(request, user)
+                return redirect('home-page')
+
+    else:
+        login_form = LoginForm();
+
+    return render(request, "login/index.html", {"login_form": login_form})
+
+
+@transaction.atomic
+def register(request):
+    if request.method == "POST":
+        register_form = RegisterForm(request.POST)
+        if register_form.is_valid():
+
+        # Initialize a Django User model for authentication
+            email = register_form.cleaned_data.get('email')
+            password = register_form.cleaned_data.get('password')
+            user = User.objects.create_user(username=email, email=email, password=password)
+        # user.save()
+
+        # Initialize inner Address model
+            city = register_form.cleaned_data.get('city')
+            street = register_form.cleaned_data.get('street')
+            postal_code = register_form.cleaned_data.get('postal_code')
+            address = Address.objects.create(city=city, street=street, postal_code=postal_code)
+
+        # Initialize inner Profile model
+            phone_number = register_form.cleaned_data.get('phone_number')
+            profile = Profile.objects.create(user=user, address=address, phone_number=phone_number)
+
+            profile.save()
+
+            user = authenticate(username=email, email=email, password=password)
+            django_login(request, user)
+            return redirect('home-page')
+        return render(request, "register/index.html", {"register_form": register_form}, status=400)
+
+    else:
+        register_form = RegisterForm();
+
+    return render(request, "register/index.html", {"register_form": register_form})

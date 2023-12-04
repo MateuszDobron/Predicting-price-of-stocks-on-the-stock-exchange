@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI for stock market prediction</title>
+    <link rel="stylesheet" href="{% static 'login/style.css' %}">
+</head>
+<body>
+<div id="login-page-content">
+    <div id="login-page-inner">
+        <form method="POST">
+            {% csrf_token %}
+            {% for field in login_form %}
+                <div class="form-input-group">
+                    {% if field.errors %}
+                        <div class="error-list">
+                        {% for error in field.errors %}
+                            <p> {{ error|escape }} </p>
+                        {% endfor %}
+                        </div>
+                        <br>
+                    {% endif %}
+                    {{ field.label_tag }}
+                    {{ field }}
+                    <br>
+                </div>
+            {% endfor %}
+            <input type="submit" value="Login" />
+        </form>
+        <p> Don't have an account? Create <a href="/register">here!</a></p>
+    </div>
+</div>
+</body>
