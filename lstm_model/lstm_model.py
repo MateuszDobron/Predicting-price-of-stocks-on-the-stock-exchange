@@ -1,14 +1,16 @@
 # Author: Piotr Cieślak
 
 import csv
-
 import keras.layers
 import numpy
 import pandas as pd
 import logging
+import datetime
+
 from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from numpy import array
+# from pandas.tseries.holiday import get_calendar, HolidayCalendarFactory, GoodFriday
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -64,8 +66,10 @@ class LSTMModel:
 
     def predict_for_ticker(self, ticker):
         input = self.__extract_prediction_interval(ticker)
-        predicted_price = self.predict(input)
-        return numpy.append(input, predicted_price)
+        predicted_price = self.predict(input[:,0])
+        date = self.__extract_prediction_date(input[self.INPUT_DAYS - 1, 1:])
+
+        return numpy.vstack([input, numpy.append(predicted_price, date)])
 
     def predict_for_given_days(self, prices, num_of_days):
         predicted_prices = numpy.empty(num_of_days, dtype=float)
@@ -89,7 +93,7 @@ class LSTMModel:
                                          skip_header=True, max_rows=3000)
             test_data = test_data.reshape(-1, 1)
             test_data_normalized = self.__normalize_data(test_data)
-            return self.__extract_training_intervals(test_data_normalized)
+            return self.extract_training_intervals(test_data_normalized)
         else:
             col_names_list = pd.read_csv(file_path, nrows=1, header=0).columns.to_list()
 
@@ -101,9 +105,9 @@ class LSTMModel:
 
             data = data.reshape(-1, 1)
             data_normalized = self.__normalize_data(data)
-            return self.__extract_training_intervals(data_normalized)
+            return self.extract_training_intervals(data_normalized)
 
-    def __extract_training_intervals(self, data):
+    def extract_training_intervals(self, data):
         # data_input - prices from 3 days, data_output - price of the next day after 3 days
         data_input, data_exp_output = list(), list()
         for i in range(len(data)):
@@ -126,9 +130,21 @@ class LSTMModel:
             row_count = len(data)
         col_names_list = pd.read_csv(self.DEFAULT_DATASET, nrows=1, header=0).columns.to_list()
         col_name = list(map(lambda col: ticker+'_Close' in col, col_names_list)).index(True)
-        #fixme set dataset
-        input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-3, delimiter=delimiter, usecols=col_name, dtype=float)
+        input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-self.INPUT_DAYS, delimiter=delimiter, usecols=(col_name, 1, 2, 3), dtype=float)
         return input_data
+
+    def __extract_prediction_date(self, prev_day_date):
+        date = datetime.datetime(int(prev_day_date[0]), int(prev_day_date[1]), int(prev_day_date[2]))
+        if date.isoweekday() == 5:
+            timedelta = 3
+        else:
+            timedelta = 1
+        prediction_date = date + datetime.timedelta(days=timedelta)
+        prediction_date_array = numpy.zeros((1,3))
+        prediction_date_array[0][0] = prediction_date.year
+        prediction_date_array[0][1] = prediction_date.month
+        prediction_date_array[0][2] = prediction_date.day
+        return prediction_date_array
 
 
     def __normalize_data(self, data):
