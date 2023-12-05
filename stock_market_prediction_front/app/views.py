@@ -24,6 +24,7 @@ from lstm_model.lstm_model import LSTMModel
 from pathlib import Path
 from datetime import datetime
 
+import shutil
 import os
 import yfinance as yf
 
@@ -77,13 +78,12 @@ def ai_model_prediction(request):
     if request.session.get('model_type', 'lstm') == 'lstm':
         ''' Get prediction '''
         graph_prices = lstm_model_instance.predict_for_ticker(selected_company_ticker)
-
+        GraphUtils.get_graph(graph_prices)
     elif request.session.get('model_type') == 'cnn':
-        graph_prices = [1, 1, 1, 1]
-        print('to be implemented')
+        if os.path.exists("./stock_market_prediction_front/app/static/home_page/plots/plot.png"):
+            os.remove("./stock_market_prediction_front/app/static/home_page/plots/plot.png")
+        shutil.copyfile("./cnn/charts/" + selected_company_ticker + ".png", "./stock_market_prediction_front/app/static/home_page/plots/plot.png")
 
-    ''' Generate a graph based on predicted prices '''
-    GraphUtils.get_graph(graph_prices)
     return redirect("home-page")
 
 
