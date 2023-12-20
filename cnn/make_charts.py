@@ -51,6 +51,6 @@ def make_charts():
         plt.bar(down.date,down[company + "_High"]-down[company + "_Open"],width2,bottom=down[company + "_Open"],color=col2)
         plt.bar(down.date,down[company + "_Low"]-down[company + "_Close"],width2,bottom=down[company + "_Close"],color=col2)
 
-        plt.xticks(rotation=45, ha='right')
+        plt.xticks(rotation=30, ha='right')
 
         plt.savefig("./cnn/charts/" + company + ".png", dpi=250)
