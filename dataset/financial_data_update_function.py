@@ -126,11 +126,15 @@ def financial_data_update():
     extract_interestratesbonds()
 
     if os.path.exists('./dataset/data/CPI/SeriesReport.xlsx'):
-        os.remove('./dataset/data/CPI/SeriesReport.csv')
         os.remove('./dataset/data/CPI/SeriesReport.xlsx')
+    if os.path.exists('./dataset/data/CPI/SeriesReport.csv'):
+        os.remove('./dataset/data/CPI/SeriesReport.csv')
+    if os.path.exists('./dataset/data/CPI/CPI.csv'):
+        os.remove('./dataset/data/CPI/CPI.csv')
     print('now go to the specified website')
     print('https://data.bls.gov/timeseries/CUUR0000SA0?years_option=all_years')
     print('dowload .xlsx and change name to SeriesReport.xlsx')
+    print('open it in xlsx editor and remove all rows up to (not including) year jan feb ...')
     print('put it as ./dataset/data/CPI/SeriesReport.xlsx')
     input("press enter when ready")
     # https://data.bls.gov/timeseries/CUUR0000SA0?years_option=all_years
