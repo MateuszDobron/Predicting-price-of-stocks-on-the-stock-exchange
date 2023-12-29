@@ -5,7 +5,7 @@ from django import forms
 COMPANIES = (
     ('apple', 'APPLE'),
     ('nvidia', 'NVIDIA'),
-    ('google', 'GOOGLE'),
+    ('amd', 'AMD'),
     ('amazon', 'AMAZON'),
     ('microsoft', 'MICROSOFT'),
 )

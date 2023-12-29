@@ -7,7 +7,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth.models import User
+from django.contrib import messages
 from django.db import transaction
+from django.http import FileResponse
 
 from .application.company_mapper import CompanyMapper
 from .application.utils import GraphUtils
@@ -21,16 +23,23 @@ from .forms.register_form import RegisterForm
 from .models import Profile, Address
 
 from lstm_model.lstm_model import LSTMModel
-from pathlib import Path
-from datetime import datetime
 
 import shutil
 import os
 import yfinance as yf
+from concurrent.futures import ThreadPoolExecutor, wait
 
-# fixme
-lstm_model_instance = LSTMModel('C:\\dev\\git\\inzynierka\\lstm_model\\saved_models\\model.keras')
+# Train model on startup or, if exists, load compiled model
+if os.path.exists(os.getcwd() + '\\models\\lstm\\model.keras'):
+    lstm_model_instance = LSTMModel(os.getcwd() + '\\models\\lstm\\model.keras')
+else:
+    lstm_model_instance = LSTMModel('')
+    lstm_model_instance.train_model('')
+    lstm_model_instance.save_model(os.getcwd() + '\\models\\lstm\\model.keras')
+
 company_mapper = CompanyMapper()
+
+executor = ThreadPoolExecutor(max_workers=2)
 
 
 @login_required
@@ -60,6 +69,9 @@ def home_page(request):
 
 @login_required
 def model_page(request):
+    if request.session.get('show_success_training_message'):
+        messages.success(request, "Model training finished")
+        request.session['show_success_training_message'] = False
     return render(request, "model/index.html")
 
 
@@ -78,11 +90,12 @@ def ai_model_prediction(request):
     if request.session.get('model_type', 'lstm') == 'lstm':
         ''' Get prediction '''
         graph_prices = lstm_model_instance.predict_for_ticker(selected_company_ticker)
-        GraphUtils.get_graph(graph_prices)
+        GraphUtils.get_graph(graph_prices, lstm_model_instance.INPUT_DAYS,
+                             lstm_model_instance.OUTPUT_DAYS)
     elif request.session.get('model_type') == 'cnn':
         if os.path.exists("./stock_market_prediction_front/app/static/home_page/plots/plot.png"):
             os.remove("./stock_market_prediction_front/app/static/home_page/plots/plot.png")
-        shutil.copyfile("./cnn/charts/" + selected_company_ticker + ".png", "./stock_market_prediction_front/app/static/home_page/plots/plot.png")
+        shutil.copyfile("../cnn/charts/" + selected_company_ticker + ".png", "app/static/home_page/plots/plot.png")
 
     return redirect("home-page")
 
@@ -108,14 +121,22 @@ def ai_model(request):
             # asynchronically train model
             ''' Train the model with a provided train_file '''
             if FileValidator().validate_file(file=train_file) == True:
-                lstm_model_instance.train_model(train_file)
-
+                lstm_model_instance = LSTMModel('')
+                futures = []
+                futures.append(executor.submit(async_train_model, request, train_file))
+                completed, pending = wait(futures)
     # save AI model
     if request.method == 'GET':
         ''' Save the AI model to the desktop '''
-        model_save_file_name = 'Downloads\\model_' + datetime.now().strftime('%Y-%m-%d') + '.keras'
-        model_save_path = str(os.path.join(Path.home(), model_save_file_name))
-        lstm_model_instance.save_model(model_save_path)
+        lstm_model_instance.save_model(os.getcwd() + '\\download\\model.keras')
+        lstm_model_download_file = open(
+            os.getcwd() + '\\download\\model.keras', 'rb')
+        return FileResponse(lstm_model_download_file, as_attachment=True, filename='model.keras')
+
+    if request.session.get('show_success_training_message'):
+        messages.success(request, "Model training finished")
+        request.session['show_success_training_message'] = False
+
     return redirect('model-page')
 
 
@@ -135,7 +156,8 @@ def ai_model_upload(request):
 
 @login_required
 def profile(request):
-    profile = Profile.objects.get(user__email=request.user.email)
+    if request.user.is_authenticated:
+        profile = Profile.objects.get(user__email=request.user.email)
 
     if request.method == "POST":
         edit_profile_form = EditProfileForm(request.POST)
@@ -147,7 +169,8 @@ def profile(request):
             profile.save()
     else:
         edit_profile_form = EditProfileForm()
-        edit_profile_form.set_fields(profile)
+        if request.user.is_authenticated:
+            edit_profile_form.set_fields(profile)
 
     return render(request, "profile/index.html", {"edit_profile_form": edit_profile_form})
 
@@ -205,3 +228,7 @@ def register(request):
         register_form = RegisterForm();
 
     return render(request, "register/index.html", {"register_form": register_form})
+
+def async_train_model(request, train_file):
+    lstm_model_instance.train_model(train_file)
+    request.session['show_success_training_message'] = True
