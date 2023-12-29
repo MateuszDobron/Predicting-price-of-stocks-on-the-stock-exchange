@@ -7,6 +7,8 @@ stock_market_prediction_front/__pycache__/
 test.csv
 stock_market_prediction_front/uploaded-models
 lstm_model/saved_models
+benchmark/
+temp/
 stock_market_prediction_front/app/static/home_page/plots/plot.png
 .sqlite3
 media

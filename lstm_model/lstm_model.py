@@ -16,11 +16,11 @@ logging.getLogger().setLevel(logging.INFO)
 
 class LSTMModel:
     # number of nodes used in the inner layers
-    HID_LAYER_NODES_NUM = 10
+    HID_LAYER_NODES_NUM = 15
     # number of nodes used in the output layer
     OUT_LAYER_NODES_NUM = 1
     # number of days, for which to predict the output price (size of input vector)
-    INPUT_DAYS = 3
+    INPUT_DAYS = 5
     # number of predicted days (size of output vector)
     OUTPUT_DAYS = 1
     # default training/prediction dataset file path
@@ -42,18 +42,22 @@ class LSTMModel:
                               return_sequences=True),
             keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=True),
             keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=True),
+            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=True),
             keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=False),
             keras.layers.Dense(self.OUT_LAYER_NODES_NUM)
         ])
         return model
 
     def load_model(self, model_path):
+        self.model = keras.models.load_model(model_path)
+        self.INPUT_DAYS = self.model.layers[0].input_shape[1]
         return keras.models.load_model(model_path)
 
     def train_model(self, file_path):
+        logging.info('Started model training!')
         self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
         data_x, data_y = self.__prepare_train_data(file_path)
-        self.model.fit(data_x, data_y, epochs=100, verbose=1)
+        self.model.fit(data_x, data_y, epochs=100, verbose=2)
 
     def predict(self, prices):
         prices = prices.reshape(-1, 1)
@@ -131,6 +135,13 @@ class LSTMModel:
         col_names_list = pd.read_csv(self.DEFAULT_DATASET, nrows=1, header=0).columns.to_list()
         col_name = list(map(lambda col: ticker+'_Close' in col, col_names_list)).index(True)
         input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-self.INPUT_DAYS, delimiter=delimiter, usecols=(col_name, 1, 2, 3), dtype=float)
+
+        i = 1
+        while numpy.isnan(input_data).any():
+            input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-self.INPUT_DAYS-i,
+                                          max_rows=self.INPUT_DAYS, delimiter=delimiter, usecols=(col_name, 1, 2, 3),
+                                          dtype=float)
+            i += 1
         return input_data
 
     def __extract_prediction_date(self, prev_day_date):
