@@ -51,14 +51,10 @@
             <h2>SAVE AI MODEL</h2>
             <div class="ai-model-form-outer">
                 <form action="/ai-model/" method="get" enctype="multipart/form-data">
-                    <div class="ai-model-form-inner">
+                    <div class="ai-model-form-inner-no-border">
                         {% csrf_token %}
-                            <div class="form-input-group">
-                                <label for="ai-model-download-path">PATH</label>
-                                <input type="file" name="ai-model-download-path" id="ai-model-download-path" directory multiple/> <br>
-                            </div>
+                        <input name="ai-model-download-path" type="submit" value="Save">
                     </div>
-                    <input type="submit" value="Save">
                 </form>
             </div>
         </div>
