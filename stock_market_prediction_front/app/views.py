@@ -145,17 +145,18 @@ def ai_model_upload(request):
     ''' This function is used for uploading a saved AI model to the website '''
 
     global lstm_model_instance
-    if request.FILES['ai-model-upload-path']:
+    if request.FILES['ai-model-upload-path']: # if the request contains a file of given name then load the model and set it as the working model
         uploaded_model = request.FILES['ai-model-upload-path']
 
         fs = FileSystemStorage()
-        model_filename = fs.save(os.path.join('uploaded-models', uploaded_model.name), uploaded_model)
+        model_filename = fs.save(os.path.join('uploaded-models', uploaded_model.name), uploaded_model) # find the model in users system storage
         lstm_model_instance = LSTMModel(model_filename)
     return redirect("model-page")
 
 
 @login_required
 def profile(request):
+    ''' This function is used for loading the profile management page and loading the initial values for the form '''
     if request.user.is_authenticated:
         profile = Profile.objects.get(user__email=request.user.email)
 

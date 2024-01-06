@@ -49,15 +49,16 @@ class LSTMModel:
         return model
 
     def load_model(self, model_path):
-        self.model = keras.models.load_model(model_path)
-        self.INPUT_DAYS = self.model.layers[0].input_shape[1]
+        self.model = keras.models.load_model(model_path) # load the model provided by user by given path
+        self.INPUT_DAYS = self.model.layers[0].input_shape[1] # set the number of input days to be the same as the size of the input shape required by the model
         return keras.models.load_model(model_path)
 
     def train_model(self, file_path):
         logging.info('Started model training!')
-        self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
-        data_x, data_y = self.__prepare_train_data(file_path)
-        self.model.fit(data_x, data_y, epochs=100, verbose=2)
+        self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy']) # compile the model using given parameters
+        data_x, data_y = self.__prepare_train_data(file_path) # cut the training dataset into batches of size equal to the input size (data_x) and output size (data_y)
+        #fixme delete return
+        return self.model.fit(data_x, data_y, validation_split=0.33, epochs=100, verbose=2) # train the model
 
     def predict(self, prices):
         prices = prices.reshape(-1, 1)
@@ -91,14 +92,14 @@ class LSTMModel:
         self.model.save(path)
 
     def __prepare_train_data(self, file_path):
-        delimiter = ','
-        if not file_path:
+        delimiter = ',' # delimiter is a coma since data is stored in .csv (comma-separated values)
+        if not file_path: # if user did not provide its own dataset for training then use the default dataset
             test_data = numpy.genfromtxt('../dataset/dataset.csv', delimiter=delimiter, usecols=7, dtype=float,
-                                         skip_header=True, max_rows=3000)
+                                         skip_header=True, max_rows=3000) # loading of the default dataset, rows from 1 to 3000 are the training data
             test_data = test_data.reshape(-1, 1)
-            test_data_normalized = self.__normalize_data(test_data)
-            return self.extract_training_intervals(test_data_normalized)
-        else:
+            test_data_normalized = self.__normalize_data(test_data) # normalize the data
+            return self.extract_training_intervals(test_data_normalized) # extract batches of the desired size and return
+        else: # if user provided its own dataset for training then use this dataset
             col_names_list = pd.read_csv(file_path, nrows=1, header=0).columns.to_list()
 
             # get index of column which contains close prices
@@ -112,13 +113,13 @@ class LSTMModel:
             return self.extract_training_intervals(data_normalized)
 
     def extract_training_intervals(self, data):
-        # data_input - prices from 3 days, data_output - price of the next day after 3 days
+        # data_input - prices from 5 days, data_output - price of the next day after 5 days
         data_input, data_exp_output = list(), list()
         for i in range(len(data)):
-            end_ix = i + self.INPUT_DAYS
+            end_ix = i + self.INPUT_DAYS # get the index of the last day in the sequence
             if end_ix > len(data) - 1:
                 break
-            seq_x, seq_y = data[i:end_ix], data[end_ix]
+            seq_x, seq_y = data[i:end_ix], data[end_ix] # extract 5 days as the model input and the 6th day as the expected output
             data_input.append(seq_x)
             data_exp_output.append(seq_y)
         array_data_input, array_data_exp_output = array(data_input), array(data_exp_output)
@@ -133,11 +134,11 @@ class LSTMModel:
             data = list(reader)
             row_count = len(data)
         col_names_list = pd.read_csv(self.DEFAULT_DATASET, nrows=1, header=0).columns.to_list()
-        col_name = list(map(lambda col: ticker+'_Close' in col, col_names_list)).index(True)
-        input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-self.INPUT_DAYS, delimiter=delimiter, usecols=(col_name, 1, 2, 3), dtype=float)
+        col_name = list(map(lambda col: ticker+'_Close' in col, col_names_list)).index(True) # get the column index of the company for which to perform predictions
+        input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-self.INPUT_DAYS, delimiter=delimiter, usecols=(col_name, 1, 2, 3), dtype=float) # usecols contains column which contains closing price for the company for which to perform prediction and date
 
         i = 1
-        while numpy.isnan(input_data).any():
+        while numpy.isnan(input_data).any(): # if there is no value in any row in the input_data, shift one day earlier in the dataset
             input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-self.INPUT_DAYS-i,
                                           max_rows=self.INPUT_DAYS, delimiter=delimiter, usecols=(col_name, 1, 2, 3),
                                           dtype=float)
@@ -145,8 +146,9 @@ class LSTMModel:
         return input_data
 
     def __extract_prediction_date(self, prev_day_date):
+        # extract the date for the predicted price to show on the graph
         date = datetime.datetime(int(prev_day_date[0]), int(prev_day_date[1]), int(prev_day_date[2]))
-        if date.isoweekday() == 5:
+        if date.isoweekday() == 5: # if the day of the last known closing price is friday, then the next day on the stock must be monday, since the prices don't work on the weekends
             timedelta = 3
         else:
             timedelta = 1
@@ -159,10 +161,12 @@ class LSTMModel:
 
 
     def __normalize_data(self, data):
+        # perform normalization on given data
         self.data_scaler = self.scaler.fit(data)
         return self.data_scaler.transform(data)
 
     def __inverse_transform(self, data):
+        # inverse transform the normalized data
         return self.data_scaler.inverse_transform(data)
 
 

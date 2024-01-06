@@ -27,19 +27,6 @@ class FileValidator:
         return re.findall(ext, file.name)
 
 
-    # def __validate_col_names(self, file):
-    #     """Validates the column names of a file. Return False if there is no column with the name 'Close'."""
-    #
-    #     try:
-    #         col_names = pd.read_csv(file, nrows=1, header=0).columns.to_list()
-    #         if 'Close' not in col_names:
-    #             return False
-    #         return True
-    #
-    #     except EmptyDataError:
-    #         raise EmptyFileException()
-
-
     #fixme: think if the validation of empty rows should be moved to preprocessing
     def __validate_values(self, file):
         """Validates if the values in the dataset are numerical variables."""
