@@ -12,7 +12,9 @@ temp/
 stock_market_prediction_front/app/static/home_page/plots/plot.png
 .sqlite3
 media
-
+benchmark/
+stock_market_prediction_front/models/
+temp/
 # Backup files #
 *.bak
 
