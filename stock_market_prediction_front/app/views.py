@@ -23,6 +23,7 @@ from .forms.register_form import RegisterForm
 from .models import Profile, Address
 
 from lstm_model.lstm_model import LSTMModel
+from technical_indicators import pdfcreator
 
 import shutil
 import os
@@ -40,6 +41,8 @@ else:
 company_mapper = CompanyMapper()
 
 executor = ThreadPoolExecutor(max_workers=2)
+
+DATASET_PATH = '../dataset/dataset.csv'
 
 
 @login_required
@@ -60,9 +63,9 @@ def home_page(request):
 
         context.update({'company': selected_company})
         context.update({'ticker': selected_company_ticker})
-        context.update({'max_price': selected_company_info.year_high})
-        context.update({'min_price': selected_company_info.year_low})
-        context.update({'shares': selected_company_info.shares})
+        context.update({'max_price': round(selected_company_info.year_high, 2)})
+        context.update({'min_price': round(selected_company_info.year_low, 2)})
+        context.update({'shares': round(selected_company_info.shares, 2)})
 
         return render(request, "home_page/index.html", context)
 
@@ -230,6 +233,29 @@ def register(request):
 
     return render(request, "register/index.html", {"register_form": register_form})
 
+@login_required
+def indicators(request):
+    if request.method == "GET":
+        pdfcreator.process_csv_and_generate_plots(DATASET_PATH)
+        selected_company = request.session.get('selected_company', 'apple')
+        selected_company_ticker = company_mapper.map_name_to_ticker(selected_company)
+        make_archive(os.getcwd() + '\\Technical_indicators\\' + selected_company_ticker,
+                     os.getcwd() + '\\download\\' + selected_company_ticker + '_indicators.zip')
+        return FileResponse(open(os.getcwd() + '\\download\\' + selected_company_ticker + '_indicators.zip', 'rb'),
+                            as_attachment=True, filename=selected_company_ticker + '_indicators.zip')
+
+    return redirect("home-page")
+
+
 def async_train_model(request, train_file):
     lstm_model_instance.train_model(train_file)
     request.session['show_success_training_message'] = True
+
+def make_archive(source, destination):
+    base = os.path.basename(destination)
+    name = base.split('.')[0]
+    format = base.split('.')[1]
+    archive_from = os.path.dirname(source)
+    archive_to = os.path.basename(source.strip(os.sep))
+    shutil.make_archive(name, format, archive_from, archive_to)
+    shutil.move('%s.%s' % (name, format), destination)
