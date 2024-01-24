@@ -3,6 +3,7 @@
 import csv
 import keras.layers
 import numpy
+import numpy as np
 import pandas as pd
 import logging
 import datetime
@@ -16,11 +17,11 @@ logging.getLogger().setLevel(logging.INFO)
 
 class LSTMModel:
     # number of nodes used in the inner layers
-    HID_LAYER_NODES_NUM = 15
+    HID_LAYER_NODES_NUM = 20
     # number of nodes used in the output layer
     OUT_LAYER_NODES_NUM = 1
     # number of days, for which to predict the output price (size of input vector)
-    INPUT_DAYS = 5
+    INPUT_DAYS = 4
     # number of predicted days (size of output vector)
     OUTPUT_DAYS = 1
     # default training/prediction dataset file path
@@ -36,15 +37,17 @@ class LSTMModel:
             self.model = self.load_model(model_path)
 
     def init_model(self):
-        # input shape 3,1 because we take previous 3 days and predict the one (the next) day
+        # input shape 4,1 because we take previous 4 days and predict the one (the next) day
         model = Sequential([
             keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='relu', input_shape=(self.INPUT_DAYS, 1),
                               return_sequences=True),
-            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=True),
-            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=True),
-            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=True),
+            keras.layers.LSTM(10, activation='tanh', return_sequences=True),
+            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='relu', return_sequences=True),
+            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='relu', return_sequences=True),
+            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='relu', return_sequences=True),
+            keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='relu', return_sequences=True),
             keras.layers.LSTM(self.HID_LAYER_NODES_NUM, activation='tanh', return_sequences=False),
-            keras.layers.Dense(self.OUT_LAYER_NODES_NUM)
+            keras.layers.Dense(self.OUT_LAYER_NODES_NUM, activation='linear')
         ])
         return model
 
@@ -57,8 +60,7 @@ class LSTMModel:
         logging.info('Started model training!')
         self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy']) # compile the model using given parameters
         data_x, data_y = self.__prepare_train_data(file_path) # cut the training dataset into batches of size equal to the input size (data_x) and output size (data_y)
-        #fixme delete return
-        return self.model.fit(data_x, data_y, validation_split=0.33, epochs=100, verbose=2) # train the model
+        return self.model.fit(data_x, data_y, validation_split=0.33, epochs=150, verbose=2) # train the model
 
     def predict(self, prices):
         prices = prices.reshape(-1, 1)
@@ -70,6 +72,7 @@ class LSTMModel:
         return predicted_price_transformed
 
     def predict_for_ticker(self, ticker):
+        # this function performs prediction of the closing price for company with the given ticker (selected earlier by user)
         input = self.__extract_prediction_interval(ticker)
         predicted_price = self.predict(input[:,0])
         date = self.__extract_prediction_date(input[self.INPUT_DAYS - 1, 1:])
@@ -97,8 +100,8 @@ class LSTMModel:
             test_data = numpy.genfromtxt('../dataset/dataset.csv', delimiter=delimiter, usecols=7, dtype=float,
                                          skip_header=True, max_rows=3000) # loading of the default dataset, rows from 1 to 3000 are the training data
             test_data = test_data.reshape(-1, 1)
-            test_data_normalized = self.__normalize_data(test_data) # normalize the data
-            return self.extract_training_intervals(test_data_normalized) # extract batches of the desired size and return
+            # test_data_normalized = self.__normalize_data(test_data) # normalize the data
+            return self.extract_training_intervals(test_data) # extract batches of the desired size and return
         else: # if user provided its own dataset for training then use this dataset
             col_names_list = pd.read_csv(file_path, nrows=1, header=0).columns.to_list()
 
@@ -120,8 +123,11 @@ class LSTMModel:
             if end_ix > len(data) - 1:
                 break
             seq_x, seq_y = data[i:end_ix], data[end_ix] # extract 5 days as the model input and the 6th day as the expected output
-            data_input.append(seq_x)
-            data_exp_output.append(seq_y)
+            seq_x_y_concat = np.concatenate((seq_x, seq_y), axis=None)
+            seq_x_y_concat = seq_x_y_concat.reshape(-1, 1)
+            seq_x_y_concat = self.__normalize_data(seq_x_y_concat)
+            data_input.append(seq_x_y_concat[0:self.INPUT_DAYS])
+            data_exp_output.append(seq_x_y_concat[self.INPUT_DAYS:])
         array_data_input, array_data_exp_output = array(data_input), array(data_exp_output)
         return array_data_input.reshape((array_data_input.shape[0], array_data_input.shape[1], 1)), \
             array_data_exp_output
@@ -135,7 +141,11 @@ class LSTMModel:
             row_count = len(data)
         col_names_list = pd.read_csv(self.DEFAULT_DATASET, nrows=1, header=0).columns.to_list()
         col_name = list(map(lambda col: ticker+'_Close' in col, col_names_list)).index(True) # get the column index of the company for which to perform predictions
-        input_data = numpy.genfromtxt(self.DEFAULT_DATASET, skip_header=row_count-self.INPUT_DAYS, delimiter=delimiter, usecols=(col_name, 1, 2, 3), dtype=float) # usecols contains column which contains closing price for the company for which to perform prediction and date
+        input_data = numpy.genfromtxt(self.DEFAULT_DATASET,
+                                      skip_header=row_count-self.INPUT_DAYS,
+                                      delimiter=delimiter,
+                                      usecols=(col_name, 1, 2, 3),
+                                      dtype=float) # usecols contains column which contains closing price for the company for which to perform prediction and date
 
         i = 1
         while numpy.isnan(input_data).any(): # if there is no value in any row in the input_data, shift one day earlier in the dataset
@@ -168,12 +178,3 @@ class LSTMModel:
     def __inverse_transform(self, data):
         # inverse transform the normalized data
         return self.data_scaler.inverse_transform(data)
-
-
-# model = LSTMModel('')
-# model.train_model('')
-# model.save_model('C:\\dev\\git\\inzynierka\\lstm_model\\saved_models\\model.keras')
-# x_input = array([122, 124, 119])
-# x_input = x_input.reshape((1, 3, 1))
-# print(model.predict(x_input))
-# print(model.predict_for_given_days(x_input, 3))

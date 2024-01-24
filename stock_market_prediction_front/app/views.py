@@ -191,7 +191,7 @@ def login(request):
                 return redirect('home-page')
 
     else:
-        login_form = LoginForm();
+        login_form = LoginForm()
 
     return render(request, "login/index.html", {"login_form": login_form})
 
@@ -226,7 +226,7 @@ def register(request):
         return render(request, "register/index.html", {"register_form": register_form}, status=400)
 
     else:
-        register_form = RegisterForm();
+        register_form = RegisterForm()
 
     return render(request, "register/index.html", {"register_form": register_form})
 
