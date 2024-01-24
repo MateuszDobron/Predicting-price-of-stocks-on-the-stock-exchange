@@ -35,7 +35,7 @@ def process_csv_and_generate_plots(input_file):
     processed_csv = process_csv(input_file)
     
     df = pd.read_csv(processed_csv)
-    companies = set(col[:4] for col in df.columns if '_Close' in col)
+    companies = set(col.split('_')[0] for col in df.columns if '_Close' in col)
 
     for company in companies:
         output_folder = os.path.join('Technical_Indicators', company)
