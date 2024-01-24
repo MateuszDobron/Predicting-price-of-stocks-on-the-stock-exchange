@@ -18,21 +18,25 @@
             <div id="price-graph">
                 <img id="plot" src="{% static 'home_page/plots/plot.png' %}">
             </div>
-            <div id="ticker-information">
-                <form action="/ai-model/prediction/" method="post">
-                {% csrf_token %}
-                    {{ choose_company_form }}
-                </form>
-                <ul>
-                    <li><a><b>Company:</b> {{ company }}</a></li>
-                    <li><a><b>Ticker:</b> {{ ticker }}</a></li>
-                    <li><a><b>Company shares:</b> {{ shares }}</a></li>
-                    <li><a><b>Max price:</b> {{ max_price }}</a></li>
-                    <li><a><b>Min price:</b> {{ min_price }}</a></li>
-                </ul>
-            </div>
-            <div id="idk">
-
+            <div style="width: fit-content; text-align: center">
+                <div id="ticker-information">
+                    <form action="/ai-model/prediction/" method="post">
+                    {% csrf_token %}
+                        {{ choose_company_form }}
+                    </form>
+                    <ul>
+                        <li><a><b>Company:</b> {{ company }}</a></li>
+                        <li><a><b>Ticker:</b> {{ ticker }}</a></li>
+                        <li><a><b>Company shares:</b> {{ shares }}</a></li>
+                        <li><a><b>Max price:</b> {{ max_price }}</a></li>
+                        <li><a><b>Min price:</b> {{ min_price }}</a></li>
+                    </ul>
+                </div>
+                <div id="technical-indicators">
+                    <form action="/indicators" method="get">
+                        <button type="submit"> Get technical indicators here</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

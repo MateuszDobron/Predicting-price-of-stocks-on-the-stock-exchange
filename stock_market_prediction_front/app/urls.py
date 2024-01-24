@@ -12,5 +12,6 @@ urlpatterns = [
     path("register/", views.register, name="register"),
     path("ai-model/", views.ai_model, name="ai-model"),
     path("ai-model/prediction/", views.ai_model_prediction, name="ai-model-prediction"),
-    path("ai-model/upload/", views.ai_model_upload, name="ai-model-upload")
+    path("ai-model/upload/", views.ai_model_upload, name="ai-model-upload"),
+    path("indicators/", views.indicators, name="get-indicators")
 ]

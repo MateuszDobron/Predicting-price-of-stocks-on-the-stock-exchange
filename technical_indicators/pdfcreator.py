@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from matplotlib.backends.backend_pdf import PdfPages
-from indicator_descriptions import descriptions
-from technical_indicators_calculation import process_csv
+from .indicator_descriptions import descriptions
+from .technical_indicators_calculation import process_csv
 
 def plot_indicator(company, data, indicator, output_folder):
     plt.figure(figsize=(10,8))
@@ -46,4 +46,4 @@ def process_csv_and_generate_plots(input_file):
             plot_indicator(company, df, indicator, output_folder)
 
 # Usage (to use without the app)
-process_csv_and_generate_plots('dataset.csv')
+# process_csv_and_generate_plots('dataset.csv')

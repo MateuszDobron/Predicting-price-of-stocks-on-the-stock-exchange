@@ -44,9 +44,7 @@ body {
 
 #ticker-information {
     margin-top: 2em;
-    margin-right: 5%;
-    margin-left: 0;
-    width: fit-content;
+    width: 100%;
     grid-column: 2;
     grid-row: 1;
     border-radius: 5%;
@@ -70,4 +68,28 @@ body {
 #ticker-information > ul > li {
     padding: 5%;
     text-align: left;
+}
+
+#technical-indicators {
+    margin-top: 10%;
+    padding-top: 2%;
+    width: 100%;
+    text-align: center;
+}
+
+#technical-indicators > form > button {
+    border: none;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: large;
+    font-weight: bold;
+    background-color: #858181;
+    transition-duration: 0.4s;
+}
+
+#technical-indicators > form > button:hover {
+    background-color: white;
+    color: black;
 }
