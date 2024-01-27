@@ -48,9 +48,10 @@ body {
     grid-column: 2;
     grid-row: 1;
     border-radius: 5%;
-    background-color: #858181;
-    text-align: center;
+    border: 1px solid white;
+    /*text-align: center;*/
     height: fit-content;
+    overflow: hidden;
 }
 
 #ticker-information > form {
@@ -66,8 +67,36 @@ body {
 }
 
 #ticker-information > ul > li {
-    padding: 5%;
+    padding: 6%;
     text-align: left;
+    font-size: larger;
+}
+
+#ticker-information > ul > li > a.table-value {
+    text-align: right;
+}
+
+.table-key {
+    color: #858181;
+    transition-duration: 0.4s;
+}
+
+.table-value {
+    color: white;
+}
+
+.table-key:hover {
+    color: #b6b3b3;
+}
+
+#ticker-information > form > select {
+    appearance: none;
+    width: 100%;
+    font-size: 1.15rem;
+    padding: 2%;
+    background-color: #c5c5c5;
+    text-align: center;
+    color: #000;
 }
 
 #technical-indicators {

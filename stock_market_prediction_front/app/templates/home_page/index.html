@@ -25,11 +25,11 @@
                         {{ choose_company_form }}
                     </form>
                     <ul>
-                        <li><a><b>Company:</b> {{ company }}</a></li>
-                        <li><a><b>Ticker:</b> {{ ticker }}</a></li>
-                        <li><a><b>Company shares:</b> {{ shares }}</a></li>
-                        <li><a><b>Max price:</b> {{ max_price }}</a></li>
-                        <li><a><b>Min price:</b> {{ min_price }}</a></li>
+                        <li><a class="table-key"><b>Company:</b></a><a class="table-value"> {{ company }}</a></li>
+                        <li><a class="table-key"><b>Ticker:</b></a><a class="table-value"> {{ ticker }}</a></li>
+                        <li><a class="table-key"><b>Shares:</b></a><a class="table-value"> {{ shares }}</a></li>
+                        <li><a class="table-key"><b>Max price:</b></a><a class="table-value"> {{ max_price }}</a></li>
+                        <li><a class="table-key"><b>Min price:</b></a><a class="table-value"> {{ min_price }}</a></li>
                     </ul>
                 </div>
                 <div id="technical-indicators">

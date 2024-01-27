@@ -1,4 +1,5 @@
 # Author: Piotr Cieślak
+import string
 
 from django.shortcuts import render, redirect
 from django.core.files.storage import FileSystemStorage
@@ -61,7 +62,7 @@ def home_page(request):
         selected_company_inst = yf.Ticker(selected_company_ticker)
         selected_company_info = selected_company_inst.basic_info
 
-        context.update({'company': selected_company})
+        context.update({'company': selected_company.upper()})
         context.update({'ticker': selected_company_ticker})
         context.update({'max_price': round(selected_company_info.year_high, 2)})
         context.update({'min_price': round(selected_company_info.year_low, 2)})
@@ -170,6 +171,7 @@ def profile(request):
             profile.address.city = edit_profile_form.cleaned_data.get('city')
             profile.address.street = edit_profile_form.cleaned_data.get('street')
             profile.address.postal_code = edit_profile_form.cleaned_data.get('postal_code')
+            profile.address.save()
             profile.save()
     else:
         edit_profile_form = EditProfileForm()
