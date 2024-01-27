@@ -10,6 +10,7 @@ lstm_model/saved_models
 benchmark/
 temp/
 stock_market_prediction_front/app/static/home_page/plots/plot.png
+stock_market_prediction_front/Technical_Indicators
 .sqlite3
 media
 benchmark/
